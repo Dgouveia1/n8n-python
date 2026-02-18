@@ -1,24 +1,22 @@
+# 1. Mantemos a latest para não quebrar seu banco de dados
 FROM n8nio/n8n:latest
 
 USER root
 
-# Script inteligente que detecta o sistema (Alpine ou Debian) e instala o Python
-RUN if [ -e /sbin/apk ]; then \
-        echo "--> Sistema Detectado: ALPINE"; \
-        echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-        apk update && \
-        apk add --no-cache python3 py3-pip py3-pandas py3-numpy; \
-    elif [ -e /usr/bin/apt-get ]; then \
-        echo "--> Sistema Detectado: DEBIAN"; \
-        apt-get update && \
-        apt-get install -y python3 python3-pip python3-pandas python3-numpy && \
-        rm -rf /var/lib/apt/lists/*; \
-    else \
-        echo "--> ERRO: Sistema desconhecido. Imprimindo detalhes:"; \
-        cat /etc/os-release; \
-        exit 1; \
-    fi
+# --- A MÁGICA ACONTECE AQUI ---
+# Como a imagem é "Hardened" e não tem 'apk', nós copiamos ele
+# de uma imagem Alpine oficial (versão edge para bater com a 3.22 do n8n)
+COPY --from=alpine:edge /sbin/apk /sbin/apk
+COPY --from=alpine:edge /lib/apk /lib/apk
+COPY --from=alpine:edge /etc/apk /etc/apk
+COPY --from=alpine:edge /usr/share/apk /usr/share/apk
+COPY --from=alpine:edge /var/lib/apk /var/lib/apk
 
+# 2. Agora que "transplantamos" o apk, podemos instalar o Python normalmente
+RUN apk update && \
+    apk add --no-cache python3 py3-pip py3-pandas py3-numpy
+
+# Configuração padrão
 ENV N8N_PYTHON_INTERPRETER=/usr/bin/python3
 
 USER node
