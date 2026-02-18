@@ -1,16 +1,23 @@
-# Usamos a imagem ESPECIAL para runners (não a do n8n)
+# Imagem oficial dos runners
 FROM n8nio/runners:latest
 
 USER root
 
-# 1. Instalamos Numpy e Pandas usando 'uv' (o gerenciador ultra-rápido do runner)
+# 1. Instalação do Python e Libs (Mantido)
 RUN cd /opt/runners/task-runner-python && \
     uv pip install numpy pandas
 
-# 2. Criamos o arquivo de configuração JSON na marra
-# (Isso libera o uso do pandas e numpy, que são bloqueados por padrão)
+# 2. Configuração COMPLETA (Python + JavaScript)
+# Adicionei o bloco "javascript" para parar o erro
 RUN echo '{ \
   "task-runners": [ \
+    { \
+      "runner-type": "javascript", \
+      "env-overrides": { \
+        "NODE_FUNCTION_ALLOW_BUILTIN": "*", \
+        "NODE_FUNCTION_ALLOW_EXTERNAL": "*" \
+      } \
+    }, \
     { \
       "runner-type": "python", \
       "env-overrides": { \
