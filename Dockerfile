@@ -6,13 +6,13 @@ USER root
 RUN cd /opt/runners/task-runner-python && \
     uv pip install numpy pandas
 
-# 2. Configuração com Portas de Health Check Definidas
-# Isso resolve o erro "health-check-server-port is required"
+# 2. Configuração com Portas em STRING
+# Note as aspas em "5680" e "5681" - isso resolve o erro de unmarshal
 RUN echo '{ \
   "task-runners": [ \
     { \
       "runner-type": "javascript", \
-      "health-check-server-port": 5680, \
+      "health-check-server-port": "5680", \
       "env-overrides": { \
         "NODE_FUNCTION_ALLOW_BUILTIN": "*", \
         "NODE_FUNCTION_ALLOW_EXTERNAL": "*" \
@@ -20,7 +20,7 @@ RUN echo '{ \
     }, \
     { \
       "runner-type": "python", \
-      "health-check-server-port": 5681, \
+      "health-check-server-port": "5681", \
       "env-overrides": { \
         "PYTHONPATH": "/opt/runners/task-runner-python", \
         "N8N_RUNNERS_STDLIB_ALLOW": "*", \
