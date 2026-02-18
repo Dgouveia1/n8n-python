@@ -6,13 +6,14 @@ USER root
 RUN cd /opt/runners/task-runner-python && \
     uv pip install numpy pandas
 
-# 2. Configuração com Portas em STRING
-# Note as aspas em "5680" e "5681" - isso resolve o erro de unmarshal
+# 2. Configuração Ajustada
+# - Portas mudadas para 5681 e 5682 (para fugir da 5680 do launcher)
+# - Mantivemos as aspas "" porque o sistema exige String
 RUN echo '{ \
   "task-runners": [ \
     { \
       "runner-type": "javascript", \
-      "health-check-server-port": "5680", \
+      "health-check-server-port": "5681", \
       "env-overrides": { \
         "NODE_FUNCTION_ALLOW_BUILTIN": "*", \
         "NODE_FUNCTION_ALLOW_EXTERNAL": "*" \
@@ -20,7 +21,7 @@ RUN echo '{ \
     }, \
     { \
       "runner-type": "python", \
-      "health-check-server-port": "5681", \
+      "health-check-server-port": "5682", \
       "env-overrides": { \
         "PYTHONPATH": "/opt/runners/task-runner-python", \
         "N8N_RUNNERS_STDLIB_ALLOW": "*", \
