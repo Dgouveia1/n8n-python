@@ -2,33 +2,30 @@ FROM n8nio/runners:latest
 
 USER root
 
-# 1. Instalação do Python e Libs
+# 1. Instalar Pandas e Numpy (Mantido)
 RUN cd /opt/runners/task-runner-python && \
     uv pip install numpy pandas
 
-# 2. Configuração Ajustada
-# - Portas mudadas para 5681 e 5682 (para fugir da 5680 do launcher)
-# - Mantivemos as aspas "" porque o sistema exige String
-RUN echo '{ \
-  "task-runners": [ \
-    { \
-      "runner-type": "javascript", \
-      "health-check-server-port": "5681", \
-      "env-overrides": { \
-        "NODE_FUNCTION_ALLOW_BUILTIN": "*", \
-        "NODE_FUNCTION_ALLOW_EXTERNAL": "*" \
-      } \
-    }, \
-    { \
-      "runner-type": "python", \
-      "health-check-server-port": "5682", \
-      "env-overrides": { \
-        "PYTHONPATH": "/opt/runners/task-runner-python", \
-        "N8N_RUNNERS_STDLIB_ALLOW": "*", \
-        "N8N_RUNNERS_EXTERNAL_ALLOW": "numpy,pandas" \
-      } \
-    } \
-  ] \
-}' > /etc/n8n-task-runners.json
+# 2. Configuração Inteligente (Lê o padrão e aplica alterações)
+# Isso evita perder o "dir" e "command" originais que causavam o erro de chdir
+RUN python3 -c "import json; \
+    # Carrega a config original que funciona \
+    with open('/etc/task-runners.json') as f: data = json.load(f); \
+    \
+    # Localiza e edita o runner JavaScript \
+    js = next(r for r in data['task-runners'] if r['runner-type'] == 'javascript'); \
+    js['health-check-server-port'] = '5681'; \
+    js.setdefault('env-overrides', {})['NODE_FUNCTION_ALLOW_BUILTIN'] = '*'; \
+    js.setdefault('env-overrides', {})['NODE_FUNCTION_ALLOW_EXTERNAL'] = '*'; \
+    \
+    # Localiza e edita o runner Python \
+    py = next(r for r in data['task-runners'] if r['runner-type'] == 'python'); \
+    py['health-check-server-port'] = '5682'; \
+    py.setdefault('env-overrides', {})['PYTHONPATH'] = '/opt/runners/task-runner-python'; \
+    py.setdefault('env-overrides', {})['N8N_RUNNERS_STDLIB_ALLOW'] = '*'; \
+    py.setdefault('env-overrides', {})['N8N_RUNNERS_EXTERNAL_ALLOW'] = 'numpy,pandas'; \
+    \
+    # Salva no arquivo de override que o n8n lê \
+    with open('/etc/n8n-task-runners.json', 'w') as f: json.dump(data, f, indent=2);"
 
 USER runner
