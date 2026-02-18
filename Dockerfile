@@ -1,18 +1,14 @@
-# Trocamos 'latest' por uma versão específica para obrigar o download novo
-# e fugir do cache corrompido que está sem gerenciador de pacotes
-FROM n8nio/n8n:1.77.1
+# Voltamos para a latest para recuperar a compatibilidade com seu banco de dados
+FROM n8nio/n8n:latest
 
 USER root
 
-# Instalamos Python 3, Pandas e Numpy usando os pacotes pré-compilados do Alpine
-# (Isso é crucial: instalar via PIP no Alpine falharia ou demoraria horas compilando)
-RUN apk add --update --no-cache \
-    python3 \
-    py3-pip \
-    py3-pandas \
-    py3-numpy
+# Tentamos instalar via APK (Alpine).
+# Usamos o caminho completo /sbin/apk para garantir que ele ache o comando.
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache python3 py3-pip py3-pandas py3-numpy
 
-# Definimos a variável de ambiente (garantia extra)
 ENV N8N_PYTHON_INTERPRETER=/usr/bin/python3
 
 USER node
