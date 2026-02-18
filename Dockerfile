@@ -1,22 +1,23 @@
-# 1. Mantemos a latest para não quebrar seu banco de dados
 FROM n8nio/n8n:latest
 
 USER root
 
-# --- A MÁGICA ACONTECE AQUI ---
-# Como a imagem é "Hardened" e não tem 'apk', nós copiamos ele
-# de uma imagem Alpine oficial (versão edge para bater com a 3.22 do n8n)
-COPY --from=alpine:edge /sbin/apk /sbin/apk
-COPY --from=alpine:edge /lib/apk /lib/apk
-COPY --from=alpine:edge /etc/apk /etc/apk
-COPY --from=alpine:edge /usr/share/apk /usr/share/apk
-COPY --from=alpine:edge /var/lib/apk /var/lib/apk
+# --- O TRANSPLANTE DO APK ---
+# Copiamos apenas o que existe no Alpine moderno (v3.19+)
+# Usamos a tag 'latest' para garantir compatibilidade
+COPY --from=alpine:latest /sbin/apk /sbin/apk
+COPY --from=alpine:latest /lib/apk /lib/apk
+COPY --from=alpine:latest /etc/apk /etc/apk
+COPY --from=alpine:latest /usr/share/apk /usr/share/apk
 
-# 2. Agora que "transplantamos" o apk, podemos instalar o Python normalmente
+# Criamos a pasta de cache manualmente para evitar erros
+RUN mkdir -p /var/cache/apk
+
+# Agora instalamos o Python, Pandas e Numpy
 RUN apk update && \
     apk add --no-cache python3 py3-pip py3-pandas py3-numpy
 
-# Configuração padrão
+# Define onde o n8n vai achar o Python
 ENV N8N_PYTHON_INTERPRETER=/usr/bin/python3
 
 USER node
